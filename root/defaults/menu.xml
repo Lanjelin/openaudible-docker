@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openbox_menu xmlns="http://openbox.org/3.4/menu">
+<menu id="root-menu" label="MENU">
+<item label="xterm" icon="/usr/share/icons/hicolor/scalable/apps/xterm-color.svg"><action name="Execute"><command>/usr/bin/xterm</command></action></item>
+<item label="OpenAudible" icon="/usr/local/OpenAudible/webapp/assets/icons/32x32.png"><action name="Execute"><command>OpenAudible</command></action></item>
+<item label="Thunar" icon="/usr/share/icons/hicolor/scalable/apps/org.xfce.thunar.svg"><action name="Execute"><command>thunar</command></action></item>
+</menu>
+</openbox_menu>

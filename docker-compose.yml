@@ -1,0 +1,17 @@
+services:
+  openaudible:
+    image: ghcr.io/lanjelin/openaudible-docker:latest
+    container_name: openaudible
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Oslo
+      - CUSTOM_USER=JohnDoe # optional, but recommended if exposing to -
+      - PASSWORD=a-safe-pw  # the internet without any other form of authentication
+    ports:
+      - "3000:3000" #http
+      - "3001:3001" #https
+    volumes:
+      - /path/to/config:/config
+      - /alternative/data/storage:/data # optional, if you want to store books on a different dir, must be set in the app as well
+    restart: unless-stopped
