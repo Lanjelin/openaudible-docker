@@ -32,7 +32,6 @@ services:
       - "3001:3001" #https
     volumes:
       - /path/to/config:/config
-      - /alternative/data/storage:/data # optional, if you want to store books on a different dir, must be set in the app as well
     restart: unless-stopped
 ```
 
@@ -47,7 +46,6 @@ docker run -d \
   -p 3000:3000 \
   -p 3001:3001 \
   -v /path/to/config:/config \
-  -v /alternative/data/storage:/data \
   --restart unless-stopped \
   ghcr.io/lanjelin/openaudible-docker:latest
 ```
