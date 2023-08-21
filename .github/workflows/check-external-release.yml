@@ -1,0 +1,61 @@
+name: Check for new release
+
+on:
+  schedule:
+    - cron:  '0 6 * * 0'
+  workflow_dispatch:
+
+jobs:
+  check-releases:
+    runs-on: ubuntu-latest
+      
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        
+      - name: Check versions
+        id: check
+        env:
+          GITHUB_TOKEN: ${{ secrets.API_TOKEN }}
+        run: |
+          EXT_RELEASE=$(curl --silent "https://api.github.com/repos/openaudible/openaudible/releases/latest" | grep '"tag_name":' |  sed -E 's/.*"v([^"]+)".*/\1/')
+          if [ -z "${EXT_RELEASE}" ]; then
+            echo "**** Can't retrieve external release, exiting ****"
+            exit 1
+          fi
+          IMAGE_VERSION=$(cat Dockerfile | grep 'OA_VERSION=' | sed -E 's/.*=([^"]+).*/\1/');
+          if [ -z "${IMAGE_VERSION}" ]; then
+            echo "**** Can't retrieve last pushed version, exiting ****"
+            exit 1
+          fi
+          if [ "${EXT_RELEASE}" == "${IMAGE_VERSION}" ]; then
+            echo "**** Version ${EXT_RELEASE} already pushed, exiting ****"
+            exit 0
+          fi
+          PRS=$(gh pr list --repo ${{ github.repository }} --json title,author --jq "map(select(.title == \"Update to ${EXT_RELEASE}\" and .author.is_bot == true)) | length")
+          if ((PRS > 0)); then
+            echo "**** PR for Version ${EXT_RELEASE} open, exiting ****"
+            exit 0
+          fi
+          if wget -q --method=HEAD https://github.com/openaudible/openaudible/releases/download/v${EXT_RELEASE}/OpenAudible_${EXT_RELEASE}_x86_64.sh; then
+            echo "**** New version ${EXT_RELEASE} found; old version was ${IMAGE_VERSION}. Triggering new PR ****"
+            sed -i "s/OA_VERSION=${IMAGE_VERSION}/OA_VERSION=${EXT_RELEASE}/g" Dockerfile
+            echo "makepr=true" >> "$GITHUB_OUTPUT"
+            echo "ext_release=${EXT_RELEASE}" >> "$GITHUB_OUTPUT"
+          else
+            echo "**** New version ${EXT_RELEASE} found; URL invalid ****"
+            exit 1
+          fi
+
+      - name: Create Pull Request
+        id: cpr
+        if: 'steps.check.outputs.makepr'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          commit-message: Update to ${{ steps.check.outputs.ext_release }}
+          title: Update to ${{ steps.check.outputs.ext_release }}
+          branch: v${{steps.check.outputs.ext_release}}
+          body: |
+            New release available at ${{ steps.check.outputs.ext_release }}, [openaudible][1]
+
+            [1]: https://github.com/openaudible/openaudible/releases
