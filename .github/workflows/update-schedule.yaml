@@ -1,0 +1,84 @@
+name: Scheduled Update
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  push:
+    paths-ignore:
+      - "**.md"
+      - "**.yaml"
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  do-stuff-pretty-please:
+    runs-on: ubuntu-latest
+      
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Check versions
+        id: check
+        env:
+          GITHUB_TOKEN: ${{ secrets.API_TOKEN }}
+        run: |
+          EXT_RELEASE=$(curl --silent "https://api.github.com/repos/openaudible/openaudible/releases/latest" | grep '"tag_name":' |  sed -E 's/.*"v([^"]+)".*/\1/')
+          if [ -z "${EXT_RELEASE}" ]; then
+            echo "**** Can't retrieve external release, exiting ****"
+            exit 1
+          fi
+          IMAGE_VERSION=$(cat Dockerfile | grep 'OA_VERSION=' | sed -E 's/.*=([^"]+).*/\1/');
+          if [ -z "${IMAGE_VERSION}" ]; then
+            echo "**** Can't retrieve last pushed version, exiting ****"
+            exit 1
+          fi
+          if [ "${EXT_RELEASE}" == "${IMAGE_VERSION}" ]; then
+            echo "**** Version ${EXT_RELEASE} already pushed, exiting ****"
+            exit 0
+          fi
+          if wget -q --method=HEAD https://github.com/openaudible/openaudible/releases/download/v${EXT_RELEASE}/OpenAudible_${EXT_RELEASE}_x86_64.sh; then
+            echo "**** New version ${EXT_RELEASE} found; old version was ${IMAGE_VERSION}. Triggering new PR ****"
+            sed -i "s/OA_VERSION=${IMAGE_VERSION}/OA_VERSION=${EXT_RELEASE}/g" Dockerfile
+            echo "update=true" >> "$GITHUB_OUTPUT"
+            echo "tag=${EXT_RELEASE}" >> "$GITHUB_OUTPUT"
+          else
+            echo "**** New version ${EXT_RELEASE} found; URL invalid ****"
+            exit 1
+          fi
+
+      - name: Commit Update
+        id: commit
+        if: 'steps.check.outputs.update'
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add .
+          git commit -m "Update to ${{ steps.check.outputs.tag }}"
+          git push
+
+      - name: Install Docker
+        id: dock
+        if: 'steps.check.outputs.update'
+        run: curl -fsSL https://get.docker.com | sh
+        
+      - name: Login to image repository
+        id: login
+        if: 'steps.check.outputs.update'
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+          
+      - name: Build and push
+        id: push
+        if: 'steps.check.outputs.update'
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ secrets.REGISTRY_USER }}/openaudible-docker:latest
+            ghcr.io/${{ secrets.REGISTRY_USER }}/openaudible-docker:${{ steps.check.outputs.tag }}
+          labels: maintainer=${{ secrets.REGISTRY_USER }}
