@@ -13,11 +13,11 @@ on:
 jobs:
   do-stuff-pretty-please:
     runs-on: ubuntu-latest
-      
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        
+
       - name: Check versions
         id: check
         env:
@@ -38,7 +38,7 @@ jobs:
             exit 0
           fi
           if wget -q --method=HEAD https://github.com/openaudible/openaudible/releases/download/v${EXT_RELEASE}/OpenAudible_${EXT_RELEASE}_x86_64.sh; then
-            echo "**** New version ${EXT_RELEASE} found; old version was ${IMAGE_VERSION}. Triggering new PR ****"
+            echo "**** New version ${EXT_RELEASE} found; old version was ${IMAGE_VERSION}. Triggering update. ****"
             sed -i "s/OA_VERSION=${IMAGE_VERSION}/OA_VERSION=${EXT_RELEASE}/g" Dockerfile
             echo "update=true" >> "$GITHUB_OUTPUT"
             echo "tag=${EXT_RELEASE}" >> "$GITHUB_OUTPUT"
@@ -57,11 +57,6 @@ jobs:
           git commit -m "Update to ${{ steps.check.outputs.tag }}"
           git push
 
-      - name: Install Docker
-        id: dock
-        if: 'steps.check.outputs.update'
-        run: curl -fsSL https://get.docker.com | sh
-        
       - name: Login to image repository
         id: login
         if: 'steps.check.outputs.update'
@@ -70,7 +65,7 @@ jobs:
           registry: ghcr.io
           username: ${{ secrets.REGISTRY_USER }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
-          
+
       - name: Build and push
         id: push
         if: 'steps.check.outputs.update'
