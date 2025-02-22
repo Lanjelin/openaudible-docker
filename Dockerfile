@@ -11,7 +11,9 @@ RUN \
     apt-get install -y --no-install-recommends \
       wget \
       gnome-icon-theme* \
-      thunar && \
+      thunar \
+      chromium \
+      libwebkit2gtk-4.1-0 && \
   echo "**** installing OpenAudible ****" && \
     wget -q https://github.com/openaudible/openaudible/releases/download/v${OA_VERSION}/OpenAudible_${OA_VERSION}_x86_64.sh && \
     sh ./OpenAudible_${OA_VERSION}_x86_64.sh -q && \
