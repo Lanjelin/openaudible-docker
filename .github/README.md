@@ -1,7 +1,7 @@
 # OpenAudible in Docker
 
 Run [OpenAudible](http://openaudible.org/) directly in your browser.  
-Container built on [linuxserver/docker-baseimage/kasmvnc](https://github.com/linuxserver/docker-baseimage-kasmvnc), running the official releases of OpenAudible from their [github](https://github.com/openaudible/openaudible/releases)  
+Container built on [linuxserver/docker-baseimage/selkies](https://github.com/linuxserver/docker-baseimage-selkies), running the official releases of OpenAudible from their [github](https://github.com/openaudible/openaudible/releases)  
 
 ## Application Setup
 

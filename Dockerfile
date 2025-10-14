@@ -1,4 +1,4 @@
-FROM ghcr.io/linuxserver/baseimage-kasmvnc:debianbookworm
+FROM ghcr.io/linuxserver/baseimage-selkies:debianbookworm
 
 LABEL maintainer="lanjelin"
 ENV TITLE=OpenAudible
