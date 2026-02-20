@@ -2,7 +2,7 @@ FROM ghcr.io/linuxserver/baseimage-selkies:debianbookworm
 
 LABEL maintainer="lanjelin"
 ENV TITLE=OpenAudible
-ENV OA_VERSION=4.7.2
+ENV OA_VERSION=4.7.3
 
 RUN \
   sed -i 's|</applications>|  <application title="OpenAudible" type="normal">\n    <maximized>no</maximized>\n  </application>\n</applications>|' /etc/xdg/openbox/rc.xml && \
